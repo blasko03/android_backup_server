@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      args:
+        - BUILD_TYPE=musl
+    volumes:
+      - .:/source:z
+    environment:
+      - RUST_LOG=info
+    ports:
+      - "8080:8080"
