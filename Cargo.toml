@@ -1,5 +1,5 @@
 [package]
-name = "backup_server"
+name = "android_backup_server"
 version = "0.1.0"
 edition = "2024"
 

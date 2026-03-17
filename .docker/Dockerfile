@@ -26,7 +26,7 @@ RUN case "$TARGETARCH" in \
     rustup target add $ARCH-unknown-$TARGETOS-$BUILD_TYPE && \
     rustup toolchain install stable-$ARCH-unknown-linux-$BUILD_TYPE --force-non-host && \
     cargo build --release --target $ARCH-unknown-$TARGETOS-$BUILD_TYPE && \
-    cp /source/target/$ARCH-unknown-$TARGETOS-$BUILD_TYPE/release/dns_updater /build/app/dns_updater
+    cp /source/target/$ARCH-unknown-$TARGETOS-$BUILD_TYPE/release/android_backup_server /build/app/android_backup_server
 
 RUN if [ "$BUILD_TYPE" = "gnu" ]; then \
         if [ "$TARGETARCH" = "arm64" ]; then \
@@ -53,4 +53,4 @@ WORKDIR /app
 COPY --from=build $SSL_CERT_FILE $SSL_CERT_FILE
 COPY --from=build /build/ /
 
-ENTRYPOINT ["/app/dns_updater"]
+ENTRYPOINT ["/app/android_backup_server"]
