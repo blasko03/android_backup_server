@@ -10,7 +10,6 @@ use tasks::file_consistency;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
-    file_consistency::check();
     let port =std::env::var("PORT").unwrap_or_default().parse::<u16>().unwrap_or(8080);
     HttpServer::new(|| {
         App::new()
