@@ -7,6 +7,7 @@ services:
         - BUILD_TYPE=musl
     volumes:
       - .:/source:z
+      - ./data:/app/data:z
     environment:
       - RUST_LOG=info
     ports:

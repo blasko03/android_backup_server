@@ -24,6 +24,7 @@ async fn add_chunk(MultipartForm(form): MultipartForm<UploadForm>) -> impl Respo
 
     // Copy uploaded file
     if let Err(e) = fs::copy(form.file.file.path(), &dest_path) {
+        log::error!("Failed to save file: {}", e);
         return HttpResponse::InternalServerError().body(format!("Failed to save file: {}", e));
     }
 
