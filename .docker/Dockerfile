@@ -48,7 +48,7 @@ RUN if [ "$BUILD_TYPE" = "gnu" ]; then \
 FROM scratch AS app
 ENV RUST_LOG=info
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-RUN mkdir -p /tmp && chmod 777 /tmp
+COPY --from=build /tmp /tmp
 WORKDIR /app
 
 COPY --from=build $SSL_CERT_FILE $SSL_CERT_FILE

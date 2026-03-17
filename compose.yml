@@ -9,6 +9,6 @@ services:
       - .:/source:z
       - ./data:/app/data:z
     environment:
-      - RUST_LOG=info
+      - RUST_LOG=debug
     ports:
       - "8080:8080"
