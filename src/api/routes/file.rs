@@ -83,7 +83,7 @@ fn file_exist(device: &Device, file: &UploadedFile) -> bool {
     };
 
     let files = device.files();
-    match files.get(&clean_path).unwrap().versions.last() {
+    match files.get(&clean_path).ok().and_then(|file| file.versions.last().cloned()) {
         Some(version) => version.hash == file.hash && version.corrupted == false,
         _ => false
     }
