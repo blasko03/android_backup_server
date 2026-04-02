@@ -8,6 +8,7 @@ services:
     volumes:
       - .:/source:z
       - ./data:/app/data:z
+    command: server
     environment:
       - RUST_LOG=debug
     ports:

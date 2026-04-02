@@ -47,7 +47,7 @@ async fn download_chunk(hash: web::Path<String>, req: HttpRequest) -> impl Respo
     let mut buffer = Vec::new();
     let mut chunk = match device.chunks().chunks_storage.get(&hash) {
         Ok(chunk) => chunk,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
+        Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
     if let Err(e) = chunk.file.read_to_end(&mut buffer){
