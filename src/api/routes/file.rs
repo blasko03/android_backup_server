@@ -69,15 +69,15 @@ async fn has_files(
     let files_check: Box<[UploadedFilePresent]> = files
         .iter()
         .map(|file| {
-            log::info!("{} {} {}", file.name, file.hash, file_exist(&device, file));
+            log::info!("{} {} {}", file.name, file.hash, file_exist(device, file));
             UploadedFilePresent {
                 name: file.name.to_string(),
-                present: file_exist(&device, file),
+                present: file_exist(device, file),
             }
         })
         .collect();
 
-    log::info!("{:?}", files_check.iter().count());
+    log::info!("{:?}", files_check.len());
     web::Json(files_check)
 }
 fn file_exist(device: &Device, file: &UploadedFile) -> bool {
@@ -92,7 +92,7 @@ fn file_exist(device: &Device, file: &UploadedFile) -> bool {
         .ok()
         .and_then(|file| file.versions.last().cloned())
     {
-        Some(version) => version.hash == file.hash && version.corrupted == false,
+        Some(version) => version.hash == file.hash && !version.corrupted,
         _ => false,
     }
 }
@@ -104,7 +104,7 @@ async fn files_list(req: HttpRequest) -> web::Json<Vec<DeviceFile>> {
 
     let files = match device.files().file_storage.list() {
         Ok(f) => f,
-        Err(e) => return web::Json(Vec::new()),
+        Err(_) => return web::Json(Vec::new()),
     }
     .iter()
     .map(|name| device.files().get(name).unwrap())

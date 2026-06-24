@@ -1,6 +1,5 @@
 use crate::backup::storage::chunks_storage::ChunksStorage;
 use actix_multipart::form::tempfile::TempFile;
-use hex;
 use sha2::{Digest, Sha256};
 use std::io::{Error, ErrorKind, Read};
 
@@ -24,7 +23,7 @@ impl DeviceChunks<'_> {
 
         let hash_hex = hex::encode(result);
 
-        if hash_hex != hash.to_string() {
+        if hash_hex != *hash {
             log::error!(
                 "Chunk hash not corresponding uploaded_hash: {} computed_hash: {}",
                 hash_hex,
@@ -45,7 +44,7 @@ impl DeviceChunks<'_> {
         Ok(true)
     }
 
-    pub fn exist(&self, hash: &String) -> bool {
+    pub fn exist(&self, hash: &str) -> bool {
         self.chunks_storage.exist(hash)
     }
 }

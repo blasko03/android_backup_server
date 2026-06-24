@@ -22,12 +22,13 @@ struct JwtAuthJson {
     password: String,
 }
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct DeviceAuth {
     pub name: String,
     pub password_hash: String,
 }
 
-pub type Devices = HashMap<String, DeviceAuth>;
+type Devices = HashMap<String, DeviceAuth>;
 
 const EXCLUDE_ROUTES: [&str; 2] = ["/login", "/liveliness"];
 

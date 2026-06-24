@@ -32,10 +32,7 @@ impl FilesStorage for FilesStorageLocal<'_> {
             }
         };
 
-        match File::create(full_path)
-            .map_err(|e| Error::from(e))
-            .and_then(|mut file| file.write_all(&json))
-        {
+        match File::create(full_path).and_then(|mut file| file.write_all(&json)) {
             Ok(_) => Ok(true),
             Err(e) => {
                 log::error!("Error writing device file: {}", e);
@@ -45,18 +42,15 @@ impl FilesStorage for FilesStorageLocal<'_> {
     }
 
     fn get(&self, path: &Path) -> Result<DeviceFile, Error> {
-        let full_path = self.path_for_file(&path);
+        let full_path = self.path_for_file(path);
         if !self.exist(&full_path) {
             log::debug!("File does not exist: {:?}", full_path);
             return Err(Error::from(NotFound));
         }
 
-        File::open(full_path)
-            .map_err(|e| Error::from(e))
-            .and_then(|file| {
-                serde_json::from_reader::<_, DeviceFile>(BufReader::new(file))
-                    .map_err(|e| Error::from(e))
-            })
+        File::open(full_path).and_then(|file| {
+            serde_json::from_reader::<_, DeviceFile>(BufReader::new(file)).map_err(Error::from)
+        })
     }
 
     fn list(&self) -> Result<HashSet<PathBuf>, Error> {
@@ -93,7 +87,7 @@ impl FilesStorage for FilesStorageLocal<'_> {
 
     fn remove(&self, path: &Path) -> Result<(), Error> {
         log::warn!("Removing file {}", path.display());
-        fs::remove_file(self.path_for_file(&path))
+        fs::remove_file(self.path_for_file(path))
     }
 }
 

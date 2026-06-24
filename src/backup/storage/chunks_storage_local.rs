@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::fs::{File, create_dir_all};
 use std::io::{Error, ErrorKind};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 const CHUNKS_PATH: &str = "chunks";
 pub struct ChunkStorageLocal<'a> {
@@ -14,8 +14,8 @@ pub struct ChunkStorageLocal<'a> {
 }
 
 impl ChunksStorage for ChunkStorageLocal<'_> {
-    fn add(&self, hash: &String, file: &TempFile) -> Result<bool, Error> {
-        let dest_path = self.path_for_chunk(&hash);
+    fn add(&self, hash: &str, file: &TempFile) -> Result<bool, Error> {
+        let dest_path = self.path_for_chunk(hash);
 
         if let Err(e) = dest_path
             .parent()
@@ -34,11 +34,11 @@ impl ChunksStorage for ChunkStorageLocal<'_> {
         Ok(true)
     }
 
-    fn get(&self, hash: &String) -> Result<DeviceChunk, Error> {
-        let dest_path = self.path_for_chunk(&hash);
+    fn get(&self, hash: &str) -> Result<DeviceChunk, Error> {
+        let dest_path = self.path_for_chunk(hash);
         match File::open(dest_path) {
             Ok(file) => Ok(DeviceChunk {
-                hash: hash.clone(),
+                hash: hash.to_string(),
                 file,
             }),
             Err(e) => {
@@ -48,14 +48,14 @@ impl ChunksStorage for ChunkStorageLocal<'_> {
         }
     }
 
-    fn exist(&self, hash: &String) -> bool {
-        let dest_path = self.path_for_chunk(&hash);
+    fn exist(&self, hash: &str) -> bool {
+        let dest_path = self.path_for_chunk(hash);
         dest_path.exists()
     }
 
-    fn remove(&self, hash: &String) -> Result<(), Error> {
+    fn remove(&self, hash: &str) -> Result<(), Error> {
         log::warn!("Removing chunk {}", hash);
-        fs::remove_file(self.path_for_chunk(&hash))
+        fs::remove_file(self.path_for_chunk(hash))
     }
 
     fn list(&self) -> Result<HashSet<String>, Error> {

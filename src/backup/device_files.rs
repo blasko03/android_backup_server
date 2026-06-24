@@ -13,7 +13,7 @@ const MIN_VERSIONS: u8 = 2;
 const MAX_AGE: TimeDelta = chrono::Duration::days(180);
 
 impl DeviceFiles<'_> {
-    pub fn add(&self, path: &Path, chunks: &Vec<String>, hash: &String) -> Result<bool, Error> {
+    pub fn add(&self, path: &Path, chunks: &[String], hash: &str) -> Result<bool, Error> {
         let device_repository = &self.file_storage;
         let mut file = match device_repository.get(path) {
             Ok(f) => f,
@@ -29,13 +29,13 @@ impl DeviceFiles<'_> {
             }
         };
 
-        if !file.versions.is_empty() && file.versions.last().unwrap().hash == hash.as_str() {
+        if !file.versions.is_empty() && file.versions.last().unwrap().hash == hash {
             return Ok(false);
         }
 
         file.versions.push(DeviceFileVersion {
-            hash: hash.clone(),
-            chunks: chunks.clone(),
+            hash: hash.to_string(),
+            chunks: chunks.to_vec(),
             corrupted: false,
             deleted: false,
             created_at: Utc::now(),
@@ -48,6 +48,7 @@ impl DeviceFiles<'_> {
         self.file_storage.get(path)
     }
 
+    #[allow(dead_code)]
     pub fn delete(&self, path: &Path) -> Result<bool, Error> {
         let device_repository = &self.file_storage;
         let mut file = match device_repository.get(path) {
@@ -72,7 +73,7 @@ impl DeviceFiles<'_> {
     pub fn files_clean(&self, report_only: bool) -> Result<(), Error> {
         let file_storage = &self.file_storage;
         for file_path in file_storage.list()?.iter() {
-            let mut file = file_storage.get(&file_path)?;
+            let mut file = file_storage.get(file_path)?;
             let mut versions = file.versions;
 
             let last_element = versions
@@ -84,7 +85,7 @@ impl DeviceFiles<'_> {
                         || i + (MAX_VERSIONS as usize) < versions.len()
                 })
                 .map(|(i, _)| i + 1)
-                .last()
+                .next_back()
                 .unwrap_or_default();
 
             if versions.is_empty() {
@@ -93,16 +94,16 @@ impl DeviceFiles<'_> {
                     file_path.to_str().unwrap()
                 );
 
-                if (!report_only) {
+                if !report_only {
                     file_storage.remove(file_path)?;
                 }
             }
 
             if let Some(version) = versions.last()
-                && version.deleted == true
+                && version.deleted
             {
                 log::warn!("Deleting file {}", file_path.to_str().unwrap());
-                if (!report_only) {
+                if !report_only {
                     file_storage.remove(file_path)?;
                 }
             }
@@ -113,7 +114,7 @@ impl DeviceFiles<'_> {
                     last_element,
                     file_path.display()
                 );
-                if (!report_only) {
+                if !report_only {
                     versions.drain(0..last_element);
                     file.versions = versions;
                     file_storage.save(file)?;

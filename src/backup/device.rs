@@ -5,7 +5,7 @@ use crate::backup::storage::files_storage::DeviceFileVersion;
 use crate::backup::storage::files_storage_local::FilesStorageLocal;
 use hex;
 use sha2::{Digest, Sha256};
-use std::io::{Error, ErrorKind, Read};
+use std::io::{Error, Read};
 pub struct Device {
     pub(crate) uuid: String,
 }
@@ -48,10 +48,7 @@ impl Device {
                 Ok(file) => file,
                 Err(e) => {
                     log::debug!("File storage get error: {:?}", e);
-                    return Err(Error::new(
-                        ErrorKind::Other,
-                        "Failed to retrieve file storage",
-                    ));
+                    return Err(Error::other("Failed to retrieve file storage"));
                 }
             };
 
@@ -72,15 +69,9 @@ impl Device {
 
     pub fn consistency_check(&self) -> Result<(), Error> {
         let file_storage = self.files().file_storage;
-        let files = match file_storage.list() {
-            Ok(f) => f,
-            Err(e) => return Err(e),
-        };
+        let files = file_storage.list()?;
         for path in files {
-            let file = match file_storage.get(&path) {
-                Ok(f) => f,
-                Err(e) => return Err(e),
-            };
+            let file = file_storage.get(&path)?;
 
             for version in file.versions {
                 self.hash_check_for_version(version).unwrap();
@@ -102,7 +93,7 @@ impl Device {
             chunk_hasher.update(&buffer);
             let hash = chunk_hasher.finalize();
             if hex::encode(hash) != chunk_name {
-                return Err(Error::new(ErrorKind::Other, "Chunk hash mismatch"));
+                return Err(Error::other("Chunk hash mismatch"));
             }
         }
 
@@ -110,6 +101,6 @@ impl Device {
         if hex::encode(result) == version.hash {
             return Ok(());
         }
-        Err(Error::new(ErrorKind::Other, "File hash mismatch"))
+        Err(Error::other("File hash mismatch"))
     }
 }

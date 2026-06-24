@@ -4,7 +4,6 @@ use crate::api::routes::file::{add_file, files_list, has_files};
 use crate::api::routes::liveliness::liveliness;
 use actix_web::middleware::from_fn;
 use actix_web::{App, HttpServer};
-use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 #[actix_web::main]
 pub async fn start_server() -> std::io::Result<()> {
