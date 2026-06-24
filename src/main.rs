@@ -1,7 +1,7 @@
 mod api;
 mod backup;
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use api::server::start_server;
 use crate::backup::device::Device;
 
@@ -15,28 +15,51 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Server,
-    FilesClean,
-    ChunksClean,
-    ConsistencyCheck
+    FilesClean(FilesCleanArgs),
+    ChunksClean(ChunksCleanArgs),
+    ConsistencyCheck(DeviceArgs)
+}
+
+#[derive(Args)]
+struct DeviceArgs {
+    device: String,
+}
+#[derive(Args)]
+struct ChunksCleanArgs {
+    #[command(flatten)]
+    device: DeviceArgs,
+    #[arg(long)]
+    report_only: bool,
+}
+
+
+#[derive(Args)]
+struct FilesCleanArgs {
+    #[command(flatten)]
+    device: DeviceArgs,
+    #[arg(long)]
+    report_only: bool,
 }
 
 fn main() {
     env_logger::init();
-    let uuid = "b699057f-8060-4c7b-96e5-ed62d0d491c3".to_string();
-    let device = Device{uuid: uuid.clone()};
     let cli = Cli::parse();
+
 
     match cli.command {
         Commands::Server => {
             let _ = start_server();
         },
-        Commands::FilesClean => {
-            device.files().files_clean().unwrap();
+        Commands::FilesClean(args) => {
+            let device = Device{uuid: args.device.device};
+            device.files().files_clean(args.report_only).unwrap();
         },
-        Commands::ChunksClean => {
-            device.chunks_clean().unwrap();
+        Commands::ChunksClean(args) => {
+            let device = Device{uuid: args.device.device};
+            device.chunks_clean(args.report_only).unwrap();
         },
-        Commands::ConsistencyCheck => {
+        Commands::ConsistencyCheck(args) => {
+            let device = Device{uuid: args.device};
             device.consistency_check().unwrap();
         }
     }

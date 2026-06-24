@@ -21,7 +21,7 @@ impl Device {
         DeviceChunks { chunks_storage: Box::new(storage)}
     }
 
-    pub fn chunks_clean(&self) -> Result<(), Error> {
+    pub fn chunks_clean(&self, report_only: bool) -> Result<(), Error> {
         let file_storage = self.files().file_storage;
         let chunks_storage = self.chunks().chunks_storage;
         let mut chunks = match chunks_storage.list(){
@@ -54,9 +54,12 @@ impl Device {
         };
 
         log::warn!("Found {} orphan chunks", chunks.len());
-        for chunk in chunks {
-            chunks_storage.remove(&chunk)?;
+        if !report_only {
+            for chunk in chunks {
+                chunks_storage.remove(&chunk)?;
+            }
         }
+
         Ok(())
     }
 

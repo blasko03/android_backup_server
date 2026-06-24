@@ -66,7 +66,7 @@ impl DeviceFiles<'_> {
         device_repository.save(file)
     }
 
-    pub fn files_clean(&self) -> Result<(), Error> {
+    pub fn files_clean(&self, report_only: bool) -> Result<(), Error> {
         let file_storage = &self.file_storage;
         for file_path in file_storage.list()?.iter() {
             let mut file = file_storage.get(&file_path)?;
@@ -83,18 +83,27 @@ impl DeviceFiles<'_> {
                 .unwrap_or_default();
 
             if versions.is_empty() {
-                file_storage.remove(file_path)?;
+                log::warn!("File {} has no versions deleting", file_path.to_str().unwrap());
+
+                if(!report_only) {
+                    file_storage.remove(file_path)?;
+                }
             }
 
             if let Some(version) = versions.last() && version.deleted == true {
-                file_storage.remove(file_path)?;
+                log::warn!("Deleting file {}", file_path.to_str().unwrap());
+                if(!report_only) {
+                    file_storage.remove(file_path)?;
+                }
             }
 
             if last_element > 0 {
                 log::warn!("Deleting versions from 0 to {} for file {:?}", last_element, file_path.display());
-                versions.drain(0..last_element);
-                file.versions = versions;
-                file_storage.save(file)?;
+                if(!report_only) {
+                    versions.drain(0..last_element);
+                    file.versions = versions;
+                    file_storage.save(file)?;
+                }
             }
         }
         Ok(())
