@@ -1,15 +1,15 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::io::Error;
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct DeviceFile{
+pub struct DeviceFile {
     pub(crate) path: PathBuf,
-    pub(crate) versions: Vec<DeviceFileVersion>
+    pub(crate) versions: Vec<DeviceFileVersion>,
 }
 #[derive(Serialize, Deserialize, Clone)]
-pub struct DeviceFileVersion{
+pub struct DeviceFileVersion {
     pub(crate) hash: String,
     pub(crate) chunks: Vec<String>,
     pub(crate) corrupted: bool,
@@ -22,5 +22,5 @@ pub trait FilesStorage {
     fn get(&self, path: &Path) -> Result<DeviceFile, Error>;
     fn list(&self) -> Result<HashSet<PathBuf>, Error>;
     fn exist(&self, path: &Path) -> bool;
-    fn remove(&self, path: &Path) -> Result<(), Error> ;
+    fn remove(&self, path: &Path) -> Result<(), Error>;
 }

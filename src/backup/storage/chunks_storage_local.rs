@@ -1,15 +1,15 @@
-use std::collections::HashSet;
-use std::fs;
-use std::fs::{create_dir_all, File};
-use std::io::{Error, ErrorKind};
-use std::path::{Path, PathBuf};
-use actix_multipart::form::tempfile::TempFile;
-use crate::backup::device::{Device};
+use crate::backup::device::Device;
 use crate::backup::storage::chunks_storage::{ChunksStorage, DeviceChunk};
 use crate::backup::storage::data_path;
+use actix_multipart::form::tempfile::TempFile;
+use std::collections::HashSet;
+use std::fs;
+use std::fs::{File, create_dir_all};
+use std::io::{Error, ErrorKind};
+use std::path::{Path, PathBuf};
 
 const CHUNKS_PATH: &str = "chunks";
-pub struct ChunkStorageLocal<'a>{
+pub struct ChunkStorageLocal<'a> {
     pub(crate) device: &'a Device,
 }
 
@@ -17,9 +17,11 @@ impl ChunksStorage for ChunkStorageLocal<'_> {
     fn add(&self, hash: &String, file: &TempFile) -> Result<bool, Error> {
         let dest_path = self.path_for_chunk(&hash);
 
-        if let Err(e) = dest_path.parent()
+        if let Err(e) = dest_path
+            .parent()
             .ok_or("Invalid path".to_string())
-            .and_then(|parent| create_dir_all(parent).map_err(|e| e.to_string())) {
+            .and_then(|parent| create_dir_all(parent).map_err(|e| e.to_string()))
+        {
             log::error!("Error creating file: {:?}", e);
             return Err(Error::new(ErrorKind::InvalidFilename, e));
         }
@@ -34,8 +36,11 @@ impl ChunksStorage for ChunkStorageLocal<'_> {
 
     fn get(&self, hash: &String) -> Result<DeviceChunk, Error> {
         let dest_path = self.path_for_chunk(&hash);
-        match File::open(dest_path){
-            Ok(file) => Ok(DeviceChunk{hash: hash.clone(), file}),
+        match File::open(dest_path) {
+            Ok(file) => Ok(DeviceChunk {
+                hash: hash.clone(),
+                file,
+            }),
             Err(e) => {
                 log::error!("Failed to open file: {}", e);
                 Err(e)
@@ -54,21 +59,21 @@ impl ChunksStorage for ChunkStorageLocal<'_> {
     }
 
     fn list(&self) -> Result<HashSet<String>, Error> {
-        let chunks = match self.path_for_chunk("").read_dir(){
+        let chunks = match self.path_for_chunk("").read_dir() {
             Ok(files) => files,
             Err(e) => {
                 log::error!("Error read_dir for path: {}", e);
-                return Err(e)
-            },
-        }.filter(|f| f.is_ok())
-            .map(|f| f.unwrap().path())
-            .filter(|f| f.is_file())
-            .map(|f| f.file_name().unwrap().to_str().unwrap().to_owned())
-            .collect();
+                return Err(e);
+            }
+        }
+        .filter(|f| f.is_ok())
+        .map(|f| f.unwrap().path())
+        .filter(|f| f.is_file())
+        .map(|f| f.file_name().unwrap().to_str().unwrap().to_owned())
+        .collect();
         Ok(chunks)
     }
 }
-
 
 impl ChunkStorageLocal<'_> {
     pub fn path_for_chunk(&self, name: &str) -> PathBuf {
@@ -76,6 +81,8 @@ impl ChunkStorageLocal<'_> {
     }
 
     pub fn path_for(&self) -> PathBuf {
-        data_path().join(self.device.uuid.as_str()).join(CHUNKS_PATH)
+        data_path()
+            .join(self.device.uuid.as_str())
+            .join(CHUNKS_PATH)
     }
 }

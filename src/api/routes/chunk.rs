@@ -1,8 +1,8 @@
-use std::io::Read;
+use crate::backup::device::Device;
 use actix_multipart::form::MultipartForm;
 use actix_multipart::form::tempfile::TempFile;
-use actix_web::{get, post, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-use crate::backup::device::Device;
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, Responder, get, post, web};
+use std::io::Read;
 
 #[derive(Debug, MultipartForm)]
 struct UploadForm {
@@ -10,7 +10,10 @@ struct UploadForm {
 }
 
 #[post("/chunk")]
-async fn add_chunk(MultipartForm(form): MultipartForm<UploadForm>, req: HttpRequest) -> impl Responder {
+async fn add_chunk(
+    MultipartForm(form): MultipartForm<UploadForm>,
+    req: HttpRequest,
+) -> impl Responder {
     let extensions = req.extensions();
     let device = extensions.get::<Device>().unwrap();
     let file_name = match &form.file.file_name {
@@ -30,7 +33,7 @@ async fn get_chunk(hash: web::Path<String>, req: HttpRequest) -> impl Responder 
     let device = extensions.get::<Device>().unwrap();
     let hash = hash.into_inner();
     if device.chunks().exist(&hash) {
-        return HttpResponse::Ok()
+        return HttpResponse::Ok();
     }
     HttpResponse::NotFound()
 }
@@ -50,13 +53,16 @@ async fn download_chunk(hash: web::Path<String>, req: HttpRequest) -> impl Respo
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    if let Err(e) = chunk.file.read_to_end(&mut buffer){
+    if let Err(e) = chunk.file.read_to_end(&mut buffer) {
         log::error!("Failed to read chunk: {}", e);
         return HttpResponse::InternalServerError().finish();
     }
-    
+
     HttpResponse::Ok()
         .append_header(("Content-Type", "application/octet-stream"))
-        .append_header(("Content-Disposition", format!("attachment; filename={:?}", hash)))
+        .append_header((
+            "Content-Disposition",
+            format!("attachment; filename={:?}", hash),
+        ))
         .body(buffer)
 }

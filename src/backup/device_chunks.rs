@@ -1,11 +1,11 @@
-use std::io::{Error, ErrorKind, Read};
-use actix_multipart::form::tempfile::TempFile;
-use sha2::{Digest, Sha256};
-use hex;
 use crate::backup::storage::chunks_storage::ChunksStorage;
+use actix_multipart::form::tempfile::TempFile;
+use hex;
+use sha2::{Digest, Sha256};
+use std::io::{Error, ErrorKind, Read};
 
 pub struct DeviceChunks<'a> {
-    pub(crate) chunks_storage: Box<dyn ChunksStorage + 'a>
+    pub(crate) chunks_storage: Box<dyn ChunksStorage + 'a>,
 }
 
 impl DeviceChunks<'_> {
@@ -25,15 +25,22 @@ impl DeviceChunks<'_> {
         let hash_hex = hex::encode(result);
 
         if hash_hex != hash.to_string() {
-            log::error!("Chunk hash not corresponding uploaded_hash: {} computed_hash: {}", hash_hex, hash);
-            return Err(Error::new(ErrorKind::InvalidData, "Chunk hash not corresponding".to_string()))
+            log::error!(
+                "Chunk hash not corresponding uploaded_hash: {} computed_hash: {}",
+                hash_hex,
+                hash
+            );
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "Chunk hash not corresponding".to_string(),
+            ));
         }
 
         let chunk = device_repository.add(hash, temp_file);
 
         if let Err(e) = chunk {
             log::error!("Error adding device chunk: {}", hash);
-            return Err(e)
+            return Err(e);
         }
         Ok(true)
     }

@@ -1,11 +1,11 @@
+use crate::backup::storage::files_storage::{DeviceFile, DeviceFileVersion, FilesStorage};
+use chrono::{TimeDelta, Utc};
 use std::io::Error;
 use std::io::ErrorKind::NotFound;
 use std::path::Path;
-use chrono::{TimeDelta, Utc};
-use crate::backup::storage::files_storage::{DeviceFile, DeviceFileVersion, FilesStorage};
 
 pub struct DeviceFiles<'a> {
-    pub(crate) file_storage: Box<dyn FilesStorage + 'a>
+    pub(crate) file_storage: Box<dyn FilesStorage + 'a>,
 }
 
 const MAX_VERSIONS: u8 = 3;
@@ -22,20 +22,23 @@ impl DeviceFiles<'_> {
                     log::debug!("Error getting device file: {}", e);
                     return Err(e);
                 }
-                DeviceFile{path: path.to_path_buf(), versions: Vec::new()}
+                DeviceFile {
+                    path: path.to_path_buf(),
+                    versions: Vec::new(),
+                }
             }
         };
 
-        if !file.versions.is_empty() && file.versions.last().unwrap().hash==hash.as_str() {
+        if !file.versions.is_empty() && file.versions.last().unwrap().hash == hash.as_str() {
             return Ok(false);
         }
 
-        file.versions.push(DeviceFileVersion{
+        file.versions.push(DeviceFileVersion {
             hash: hash.clone(),
             chunks: chunks.clone(),
             corrupted: false,
             deleted: false,
-            created_at: Utc::now()
+            created_at: Utc::now(),
         });
 
         device_repository.save(file)
@@ -76,30 +79,41 @@ impl DeviceFiles<'_> {
                 .iter()
                 .enumerate()
                 .filter(|(i, _)| i + (MIN_VERSIONS as usize) < versions.len())
-                .filter(|(i, v)| v.created_at < Utc::now()-MAX_AGE
-                    || i + (MAX_VERSIONS as usize) < versions.len())
-                .map(|(i, _)| i+1)
+                .filter(|(i, v)| {
+                    v.created_at < Utc::now() - MAX_AGE
+                        || i + (MAX_VERSIONS as usize) < versions.len()
+                })
+                .map(|(i, _)| i + 1)
                 .last()
                 .unwrap_or_default();
 
             if versions.is_empty() {
-                log::warn!("File {} has no versions deleting", file_path.to_str().unwrap());
+                log::warn!(
+                    "File {} has no versions deleting",
+                    file_path.to_str().unwrap()
+                );
 
-                if(!report_only) {
+                if (!report_only) {
                     file_storage.remove(file_path)?;
                 }
             }
 
-            if let Some(version) = versions.last() && version.deleted == true {
+            if let Some(version) = versions.last()
+                && version.deleted == true
+            {
                 log::warn!("Deleting file {}", file_path.to_str().unwrap());
-                if(!report_only) {
+                if (!report_only) {
                     file_storage.remove(file_path)?;
                 }
             }
 
             if last_element > 0 {
-                log::warn!("Deleting versions from 0 to {} for file {:?}", last_element, file_path.display());
-                if(!report_only) {
+                log::warn!(
+                    "Deleting versions from 0 to {} for file {:?}",
+                    last_element,
+                    file_path.display()
+                );
+                if (!report_only) {
                     versions.drain(0..last_element);
                     file.versions = versions;
                     file_storage.save(file)?;
